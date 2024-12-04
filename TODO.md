@@ -25,5 +25,6 @@
 
 //Instructions: Visit https://scarbs.xyz/
 //scarb add openzeppelin_access@0.19.0
+//https://docs.openzeppelin.com/contracts-cairo/0.19.0/access
 //Add OpenZeppelin Ownable Component to the Counter module. The owner should be able to call the
 //`reset_counter` function.
