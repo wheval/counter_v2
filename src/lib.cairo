@@ -10,34 +10,51 @@ trait ICounter<TContractState> {
 #[starknet::contract]
 mod Counter {
     use super::ICounter;
+    use openzeppelin_access::ownable::OwnableComponent;
     use starknet::ContractAddress;
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+
+    // Ownable Mixin
+    #[abi(embed_v0)]
+    impl OwnableTwoStep = OwnableComponent::OwnableTwoStepImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
         counter: u32,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         CounterIncreased: CounterIncreased,
-        CounterDecreased: CounterDecreased
+        CounterDecreased: CounterDecreased,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
     }
 
     #[derive(Drop, starknet::Event)]
     struct CounterIncreased {
-        counter: u32
+        counter: u32,
     }
 
     #[derive(Drop, starknet::Event)]
     struct CounterDecreased {
-        counter: u32
+        counter: u32,
+    }
+
+    pub mod Errors {
+        pub const NEGATIVE_COUNTER: felt252 = 'Counter can\'t be negative';
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, init_value: u32) {
+    fn constructor(ref self: ContractState, init_value: u32, owner: ContractAddress) {
         self.counter.write(init_value);
+        self.ownable.initializer(owner);
     }
 
     #[abi(embed_v0)]
@@ -55,12 +72,14 @@ mod Counter {
 
         fn decrease_counter(ref self: ContractState) {
             let old_counter = self.counter.read();
+            assert(old_counter > 0, Errors::NEGATIVE_COUNTER);
             let new_counter = old_counter - 1;
             self.counter.write(new_counter);
             self.emit(CounterDecreased { counter: new_counter });
         }
 
         fn reset_counter(ref self: ContractState) {
+            self.ownable.assert_only_owner();
             self.counter.write(0);
         }
     }
