@@ -44,11 +44,23 @@ fn test_deploy_contract() {
 fn test_increase_counter() {
     let initial_count = 0;
     let (counter, _) = deploy_counter(initial_count);
+    let mut spy = spy_events();
 
     counter.increase_counter();
 
     let expected_count = initial_count + 1;
     let current_count = counter.get_counter();
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    counter.contract_address,
+                    Counter::Event::CounterIncreased(
+                        Counter::CounterIncreased { counter: current_count },
+                    ),
+                ),
+            ],
+        );
 
     assert!(current_count == expected_count, "Counter should increment")
 }
@@ -57,12 +69,24 @@ fn test_increase_counter() {
 fn test_decrease_counter() {
     let initial_count = 1;
     let (counter, _) = deploy_counter(initial_count);
+    let mut spy = spy_events();
 
     counter.decrease_counter();
 
     let expected_count = initial_count - 1;
     let current_count = counter.get_counter();
 
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    counter.contract_address,
+                    Counter::Event::CounterDecreased(
+                        Counter::CounterDecreased { counter: current_count },
+                    ),
+                ),
+            ],
+        );
     assert!(current_count == expected_count, "Counter should decrement")
 }
 
@@ -98,10 +122,13 @@ fn test_reset_counter_non() {
     let (counter, safe_counter) = deploy_counter(initial_count);
 
     match safe_counter.reset_counter() {
-        Result::Ok(_) => panic!("non-owner cannot reset the counter"), 
+        Result::Ok(_) => panic!("non-owner cannot reset the counter"),
         Result::Err(panic_data) => {
-            assert!(*panic_data[0] == 'Caller is not the owner', "Should error if caller is not the owner")
-        }
+            assert!(
+                *panic_data[0] == 'Caller is not the owner',
+                "Should error if caller is not the owner",
+            )
+        },
     }
 
     let current_count = counter.get_counter();
@@ -120,9 +147,7 @@ fn test_reset_counter_as_owner() {
     counter.reset_counter();
     stop_cheat_caller_address(counter.contract_address);
 
-    let current_counter = counter.get_counter(); 
+    let current_counter = counter.get_counter();
 
     assert!(current_counter == 0, "Counter should be reset to 0")
-
 }
-
