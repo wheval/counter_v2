@@ -11,6 +11,8 @@ use sn_workshop::{
     ICounterSafeDispatcherTrait,
 };
 
+use Counter::Errors::NEGATIVE_COUNTER;
+
 fn OWNER() -> ContractAddress {
     'OWNER'.try_into().unwrap()
 }
@@ -100,7 +102,7 @@ fn test_decrease_counter_underflow() {
         Result::Ok(_) => panic!("Decrease below 0 did not panic"),
         Result::Err(panic_data) => {
             assert!(
-                *panic_data[0] == 'Counter can\'t be negative',
+                *panic_data[0] == NEGATIVE_COUNTER,
                 "Should throw NEGATIVE COUNTER error",
             )
         },
