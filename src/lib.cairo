@@ -1,5 +1,5 @@
 #[starknet::interface]
-trait ICounter<TContractState> {
+pub trait ICounter<TContractState> {
     fn get_counter(self: @TContractState) -> u32;
     fn increase_counter(ref self: TContractState);
     fn decrease_counter(ref self: TContractState);
@@ -8,7 +8,7 @@ trait ICounter<TContractState> {
 
 
 #[starknet::contract]
-mod Counter {
+pub mod Counter {
     use super::ICounter;
     use openzeppelin_access::ownable::OwnableComponent;
     use starknet::ContractAddress;
