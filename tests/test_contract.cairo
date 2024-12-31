@@ -101,10 +101,7 @@ fn test_decrease_counter_underflow() {
     match safe_counter.decrease_counter() {
         Result::Ok(_) => panic!("Decrease below 0 did not panic"),
         Result::Err(panic_data) => {
-            assert!(
-                *panic_data[0] == NEGATIVE_COUNTER,
-                "Should throw NEGATIVE COUNTER error",
-            )
+            assert!(*panic_data[0] == NEGATIVE_COUNTER, "Should throw NEGATIVE COUNTER error")
         },
     }
 }
